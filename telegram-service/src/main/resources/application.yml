@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: telegram-service
+
+telegram:
+  username: bpmn_process_bot
+  token: ${TELEGRAM_TOKEN}
+
+minio:
+  ext-endpoint: http://bpnm.evteev.ru:9000
+  endpoint: http://minio:9000
+  access-key: ag5bg6ad7lk
+  secret-key: jgd1f2h3ldh
+  bucket: voice-files
+  region: ru-central1
+
+client:
+  process-manager:
+    url: http://process-manager:8080
+
+logging:
+  level:
+    root: info
+    ru:
+      evteev:
+        bpmn:
+          telegramservice: debug

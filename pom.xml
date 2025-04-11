@@ -9,16 +9,22 @@
     <version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
+    <name>BPMN Service</name>
+
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.3</version>
+        <version>3.4.4</version>
         <relativePath/>
     </parent>
 
+    <modules>
+        <module>telegram-service</module>
+    </modules>
+
     <properties>
         <java.version>21</java.version>
-        <spring.boot.version>3.4.3</spring.boot.version>
+        <spring.boot.version>3.4.4</spring.boot.version>
     </properties>
 
     <dependencyManagement>
@@ -32,6 +38,13 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+    </dependencies>
 
     <build>
         <pluginManagement>
