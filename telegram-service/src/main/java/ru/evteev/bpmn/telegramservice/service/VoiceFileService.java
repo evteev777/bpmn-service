@@ -10,6 +10,7 @@ import ru.evteev.bpmn.telegramservice.configuration.properties.TelegramBotProper
 import ru.evteev.bpmn.telegramservice.mapper.VoiceFileInfoMapper;
 import ru.evteev.bpmn.telegramservice.model.dto.MinioVoiceFileInfo;
 import ru.evteev.bpmn.telegramservice.model.dto.TelegramVoiceFileInfo;
+import ru.evteev.bpmn.telegramservice.model.dto.VoiceRecognitionResponse;
 
 @Slf4j
 @Service
@@ -22,6 +23,7 @@ public class VoiceFileService {
     private final MinioService minioService;
     private final MessageFormatter messageFormatter;
     private final ProcessManagerClient processManagerClient;
+    private final SpeechRecognitionClient speechRecognitionClient;
 
     public void processVoiceFile(Update update) {
         TelegramVoiceFileInfo telegramFileInfo = mapper.toTelegramVoiceFileInfo(update);
@@ -30,13 +32,20 @@ public class VoiceFileService {
         String telegramFileUrl = String.format("https://api.telegram.org/file/bot%s/%s",
             botProperties.getToken(), telegramFilePath);
 
-        String minioPublicLink = minioService.uploadVoiceFileAndGetPublicLink(telegramFileUrl, telegramFileInfo.getFileUniqueId(), telegramFileInfo.getMimeType());
+        String minioPublicLink = minioService.uploadVoiceFileAndGetPublicLink(
+            telegramFileUrl, telegramFileInfo.getFileUniqueId(), telegramFileInfo.getMimeType());
 
         MinioVoiceFileInfo minioFileInfo = mapper.toMinioFileInfo(telegramFileInfo, minioPublicLink);
         log.debug("MinIO file info: {}", minioFileInfo);
 
-        String telegramMessage = messageFormatter.formatVoiceFileInfo(minioFileInfo);
-        telegramClient.reply(telegramFileInfo.getChatId(), telegramFileInfo.getMessageId(), telegramMessage);
+        VoiceRecognitionResponse recognizeResult = speechRecognitionClient.recognizeByUrl(minioPublicLink);
+        String speechAsText = recognizeResult.isSuccess() ? recognizeResult.getText() : recognizeResult.getError();
+
+        String telegramMessage = messageFormatter.formatVoiceFileInfo(minioFileInfo, speechAsText);
+
+        Long chatId = telegramFileInfo.getChatId();
+        Integer messageId = telegramFileInfo.getMessageId();
+        telegramClient.reply(chatId, messageId, telegramMessage);
 
         processManagerClient.sendVoiceToProcessManager(minioFileInfo);
     }

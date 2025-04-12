@@ -6,17 +6,20 @@ import ru.evteev.bpmn.telegramservice.model.dto.MinioVoiceFileInfo;
 @Component
 public class MessageFormatter {
 
-    public String formatVoiceFileInfo(MinioVoiceFileInfo info) {
+    public String formatVoiceFileInfo(MinioVoiceFileInfo info, String speechAsText) {
         return String.format("""
                 Ссылка: %s
                 Длительность: %s
                 Размер: %s
                 Формат: %s
+                
+                Сообщение: %s
                 """,
             info.getLink(),
             formatDuration(info.getDuration()),
             formatFileSize(info.getFileSize()),
-            info.getMimeType()
+            info.getMimeType(),
+            speechAsText
         );
     }
 
