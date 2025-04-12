@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: speech-recognizer
+
+vosk:
+  path-to-model: /opt/vosk-model-ru-0.42
