@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: voice-to-text-service
+
+vosk:
+  path-to-model: /opt/vosk-model-ru-0.42
+
+logging:
+  level:
+    root: info
+    ru.evteev.bpmn.voicetotextservice: debug

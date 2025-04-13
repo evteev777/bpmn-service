@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>bpmn.evteev.ru</groupId>
-    <artifactId>bpnm-service</artifactId>
+    <artifactId>bpmn-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
@@ -19,8 +19,8 @@
     </parent>
 
     <modules>
-        <module>telegram-service</module>
-        <module>speech-recognizer</module>
+        <module>dialog-service</module>
+        <module>voice-to-text-service</module>
     </modules>
 
     <properties>
