@@ -26,8 +26,9 @@ public class VoskVoiceToTextConverner implements VoiceToTextConverner {
             byte[] buffer = new byte[4096];
             int bytesRead;
             while ((bytesRead = pcm.read(buffer)) >= 0) {
-                boolean accepted = recognizer.acceptWaveForm(buffer, bytesRead);
-                log.debug("Partial: {}", accepted ? recognizer.getResult() : recognizer.getPartialResult());
+                recognizer.acceptWaveForm(buffer, bytesRead);
+//                boolean accepted = recognizer.acceptWaveForm(buffer, bytesRead);
+//                log.debug("Partial: {}", accepted ? recognizer.getResult() : recognizer.getPartialResult());
             }
             return extractTextFromResult(recognizer.getFinalResult());
         }

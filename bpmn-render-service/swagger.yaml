@@ -1,0 +1,37 @@
+openapi: 3.0.0
+info:
+  title: BPMN Renderer API
+  version: 1.0.0
+paths:
+  /render:
+    post:
+      summary: Render BPMN diagram to image
+      parameters:
+        - name: format
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [ png, jpeg, svg, pdf ]
+            default: png
+          description: Output image format
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Rendered image
+          content:
+            image/png: { }
+            image/jpeg: { }
+            image/svg+xml: { }
+        '400':
+          description: File not provided
+        '500':
+          description: Rendering error

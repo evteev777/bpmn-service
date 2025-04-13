@@ -3,7 +3,7 @@ spring:
     name: voice-to-text-service
 
 vosk:
-  path-to-model: /opt/vosk-model-ru-0.42
+  path-to-model: /opt/vosk-model
 
 logging:
   level:

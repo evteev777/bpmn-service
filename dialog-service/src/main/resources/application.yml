@@ -4,14 +4,14 @@ spring:
 
 client:
   voice-to-text:
-    url: http://bpmn.evteev.ru:3002/voice-to-text/ogg/file-url
+    url: http://bpmn.evteev.ru:25002/voice-to-text/ogg/file-url
 
 telegram:
   username: bpmn_process_bot
   token: ${TELEGRAM_TOKEN}
 
 minio:
-  ext-endpoint: http://bpmn.evteev.ru:9000
+  ext-endpoint: http://bpmn.evteev.ru:19000
   endpoint: http://minio:9000
   access-key: ag5bg6ad7lk
   secret-key: jgd1f2h3ldh
