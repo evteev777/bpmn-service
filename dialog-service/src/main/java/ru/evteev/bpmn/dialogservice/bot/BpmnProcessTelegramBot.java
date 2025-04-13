@@ -42,7 +42,7 @@ public class BpmnProcessTelegramBot extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
         log.info("Получен Telegram Update: {}", objectMapper.writeValueAsString(update));
         if (update.hasMessage() && update.getMessage().hasVoice()) {
-            voiceFileService.processVoiceFile(update);
+            voiceFileService.processTelegramVoiceFile(update);
         } else {
             Long chatId = update.getMessage().getChatId();
             Integer messageId = update.getMessage().getMessageId();

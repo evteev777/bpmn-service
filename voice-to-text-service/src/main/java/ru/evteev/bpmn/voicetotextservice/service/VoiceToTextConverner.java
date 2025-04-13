@@ -1,9 +1,11 @@
 package ru.evteev.bpmn.voicetotextservice.service;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.File;
+import java.net.URL;
 
 public interface VoiceToTextConverner {
 
-    String voiceToText(InputStream pcmStream) throws IOException;
+    String voiceToText(URL url);
+
+    String voiceToText(File file);
 }

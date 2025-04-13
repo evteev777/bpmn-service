@@ -7,10 +7,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.vosk.Model;
 import org.vosk.Recognizer;
 import ru.evteev.bpmn.voicetotextservice.service.AudioConverter;
+import ru.evteev.bpmn.voicetotextservice.service.FileDownloader;
 import ru.evteev.bpmn.voicetotextservice.service.VoiceToTextConverner;
 
-import java.io.IOException;
+import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -20,17 +27,52 @@ public class VoskVoiceToTextConverner implements VoiceToTextConverner {
     private final Model model;
 
     @Override
-    public String voiceToText(InputStream audioStream) throws IOException {
-        try (InputStream pcm = audioConverter.convertToPcm(audioStream)) {
+    public String voiceToText(URL url) {
+        File tempOgg;
+        try {
+            tempOgg = FileDownloader.downloadToTempFile(url.toString(), "voice_", ".ogg");
+        } catch (URISyntaxException | MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
+        String voiceToText = voiceToText(tempOgg);
+        boolean deleted = tempOgg.delete();
+        if (!deleted) {
+            log.warn("Удаление временного WAV-файла {} не удалось", tempOgg.getAbsolutePath());
+        }
+        return voiceToText;
+    }
+
+    @Override
+    public String voiceToText(File file) {
+        try (InputStream pcm = new BufferedInputStream(audioConverter.convertToPcm(file))) {
             Recognizer recognizer = new Recognizer(model, 16000.0f);
             byte[] buffer = new byte[4096];
             int bytesRead;
+            List<String> recognizedPhrases = new ArrayList<>();
+
             while ((bytesRead = pcm.read(buffer)) >= 0) {
-                recognizer.acceptWaveForm(buffer, bytesRead);
-//                boolean accepted = recognizer.acceptWaveForm(buffer, bytesRead);
-//                log.debug("Partial: {}", accepted ? recognizer.getResult() : recognizer.getPartialResult());
+                boolean accepted = recognizer.acceptWaveForm(buffer, bytesRead);
+                if (accepted) {
+                    String resultJson = recognizer.getResult();
+
+                    String text = extractTextFromResult(resultJson);
+                    if (!text.isBlank()) {
+                        recognizedPhrases.add(text);
+                    }
+                } else {
+                    recognizer.getPartialResult();
+                }
             }
-            return extractTextFromResult(recognizer.getFinalResult());
+            String finalResultJson = recognizer.getFinalResult();
+            String finalText = extractTextFromResult(finalResultJson);
+            if (!finalText.isBlank()) {
+                recognizedPhrases.add(finalText);
+            }
+            String fullText = String.join(" ", recognizedPhrases).trim();
+            log.info("Распознанный текст: '{}'", fullText);
+            return fullText;
+        } catch (Exception e) {
+            throw new RuntimeException("Ошибка при распознавании речи", e);
         }
     }
 

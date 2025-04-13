@@ -7,6 +7,4 @@ import java.io.InputStream;
 public interface AudioConverter {
 
     InputStream convertToPcm(File sourceFile) throws IOException;
-
-    InputStream convertToPcm(InputStream input) throws IOException;
 }

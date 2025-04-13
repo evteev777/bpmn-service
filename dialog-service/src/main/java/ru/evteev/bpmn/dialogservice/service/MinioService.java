@@ -14,8 +14,12 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import ru.evteev.bpmn.dialogservice.configuration.properties.MinioProperties;
+import ru.evteev.bpmn.dialogservice.model.dto.MultipartVoiceFileInfo;
+import ru.evteev.bpmn.dialogservice.model.dto.TelegramVoiceFileInfo;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,6 +37,9 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class MinioService {
 
+    public static final String TELEGRAM = "telegram/";
+    public static final String MULTIPART = "multipart/";
+
     private final MinioProperties props;
     private MinioClient client;
 
@@ -44,17 +51,10 @@ public class MinioService {
             .build();
     }
 
-    public String uploadVoiceFileAndGetPublicLink(String telegramFileUrl, String fileName, String mimeType) {
-        String publicLink;
-        try (InputStream in = new URI(telegramFileUrl).toURL().openStream()) {
+    public String getPublicLink(String telegramFileUrl, TelegramVoiceFileInfo fileInfo) {
+        try (InputStream is = new BufferedInputStream(new URI(telegramFileUrl).toURL().openStream())) {
 
-            String fileType = Arrays.asList(mimeType.split("/")).getLast();
-            String fileNameWithType = fileName + "." + fileType;
-
-            Path tempFile = Files.createTempFile("voice_", fileType);
-            Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
-
-            publicLink = uploadVoiceFile(tempFile.toFile(), fileNameWithType, mimeType);
+            return uploadVoiceFileAndGetPublicLink(fileInfo.fileUniqueId(), fileInfo.mimeType(), is, TELEGRAM);
 
         } catch (URISyntaxException e) {
             throw new RuntimeException("Ошибка в URL файла записи голоса из Telegram", e);
@@ -64,34 +64,53 @@ public class MinioService {
                  InvalidKeyException | InvalidResponseException | XmlParserException | InternalException e) {
             throw new RuntimeException("Ошибка при сохранении файла в MinIO", e);
         }
-        return publicLink;
     }
 
-    private String uploadVoiceFile(File file, String fileNameWithType, String mimeType) throws ServerException,
-        InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException,
-        InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+    public String getPublicLink(MultipartFile file, MultipartVoiceFileInfo fileInfo) {
+        try (InputStream is = new BufferedInputStream(file.getInputStream())) {
 
-        String bucket = getOrCreateBucket();
-        String s3ObjectKey = "voice/" + fileNameWithType;
-        UploadObjectArgs args = UploadObjectArgs.builder()
-            .bucket(bucket)
-            .object(s3ObjectKey)
-            .filename(file.getAbsolutePath())
-            .contentType(mimeType)
-            .build();
-        client.uploadObject(args);
-        return String.format("%s/%s/%s", props.getExtEndpoint(), bucket, s3ObjectKey);
-    }
+            return uploadVoiceFileAndGetPublicLink(fileInfo.fileUniqueId(), fileInfo.mimeType(), is, MULTIPART);
 
-    private String getOrCreateBucket() throws ServerException,
-        InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException,
-        InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
-
-        String bucket = props.getBucket();
-        boolean found = client.bucketExists(BucketExistsArgs.builder().bucket(bucket).build());
-        if (!found) {
-            client.makeBucket(MakeBucketArgs.builder().bucket(bucket).build());
+        } catch (IOException e) {
+            throw new RuntimeException("Ошибка ввода-вывода", e);
+        } catch (ServerException | InsufficientDataException | ErrorResponseException | NoSuchAlgorithmException |
+                 InvalidKeyException | InvalidResponseException | XmlParserException | InternalException e) {
+            throw new RuntimeException("Ошибка при сохранении файла в MinIO", e);
         }
-        return bucket;
+    }
+
+    private String uploadVoiceFileAndGetPublicLink(String fileName, String mimeType, InputStream is, String from)
+        throws IOException, ServerException, InsufficientDataException, ErrorResponseException, NoSuchAlgorithmException,
+        InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+
+        String fileType = Arrays.asList(mimeType.split("/")).getLast();
+        String fileNameWithType = from + fileName + "." + fileType;
+
+        Path tempFile = Files.createTempFile("voice_", fileType);
+        File file = tempFile.toFile();
+        try {
+            Files.copy(is, tempFile, StandardCopyOption.REPLACE_EXISTING);
+
+            String bucket = props.getBucket();
+            if (!client.bucketExists(BucketExistsArgs.builder().bucket(bucket).build())) {
+                client.makeBucket(MakeBucketArgs.builder().bucket(bucket).build());
+            }
+
+            UploadObjectArgs args = UploadObjectArgs.builder()
+                .bucket(bucket)
+                .object(fileNameWithType)
+                .filename(file.getAbsolutePath())
+                .contentType(mimeType)
+                .build();
+
+            client.uploadObject(args);
+
+            return String.format("%s/%s/%s", props.getExtEndpoint(), bucket, fileNameWithType);
+        } finally {
+            boolean deleted = file.delete();
+            if (!deleted) {
+                log.warn("Удаление временного файла {}: не удалось", file.getAbsolutePath());
+            }
+        }
     }
 }

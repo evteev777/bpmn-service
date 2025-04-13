@@ -1,12 +1,16 @@
 package ru.evteev.bpmn.dialogservice.mapper;
 
 import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.Voice;
 import ru.evteev.bpmn.dialogservice.model.dto.MinioVoiceFileInfo;
+import ru.evteev.bpmn.dialogservice.model.dto.MultipartVoiceFileInfo;
 import ru.evteev.bpmn.dialogservice.model.dto.TelegramVoiceFileInfo;
+
+import java.util.UUID;
 
 @Component
 public class VoiceFileInfoMapper {
@@ -28,12 +32,29 @@ public class VoiceFileInfoMapper {
             .build();
     }
 
+    public MultipartVoiceFileInfo toMultipartVoiceFileInfo(MultipartFile file) {
+        return MultipartVoiceFileInfo.builder()
+            .fileUniqueId(UUID.randomUUID().toString())
+            .mimeType(file.getContentType())
+            .fileSize(file.getSize())
+            .build();
+    }
+
     public MinioVoiceFileInfo toMinioFileInfo(TelegramVoiceFileInfo telegramFile, String minioPublicLink) {
         return MinioVoiceFileInfo.builder()
             .link(minioPublicLink)
             .fileUniqueId(telegramFile.fileUniqueId())
             .fileSize(telegramFile.fileSize())
             .duration(telegramFile.duration())
+            .mimeType(telegramFile.mimeType())
+            .build();
+    }
+
+    public MinioVoiceFileInfo toMinioFileInfo(MultipartVoiceFileInfo telegramFile, String minioPublicLink) {
+        return MinioVoiceFileInfo.builder()
+            .link(minioPublicLink)
+            .fileUniqueId(telegramFile.fileUniqueId())
+            .fileSize(telegramFile.fileSize())
             .mimeType(telegramFile.mimeType())
             .build();
     }

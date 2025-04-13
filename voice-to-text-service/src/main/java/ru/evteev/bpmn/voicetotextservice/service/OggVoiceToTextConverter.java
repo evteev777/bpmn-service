@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Set;
@@ -36,10 +35,7 @@ public class OggVoiceToTextConverter {
         if (!isSupported(contentType, path)) {
             throw new IllegalArgumentException("Неподдерживаемый формат аудио: " + contentType + " / " + path);
         }
-
-        try (InputStream input = publicUrl.openStream()) {
-            return voiceToTextConverner.voiceToText(input);
-        }
+        return voiceToTextConverner.voiceToText(publicUrl);
     }
 
     private boolean isSupported(String contentType, String path) {
