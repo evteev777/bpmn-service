@@ -4,8 +4,13 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
@@ -56,6 +61,63 @@ public class TelegramClient {
             .retrieve()
             .bodyToMono(String.class)
             .subscribe();
+    }
+
+    public void sendPhotoWithCaption(Long chatId,
+                                     Integer replyToMessageId,
+                                     String caption,
+                                     byte[] photoBytes,
+                                     String filename) {
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("chat_id", chatId.toString());
+        body.add("reply_to_message_id", replyToMessageId.toString());
+        body.add("caption", caption);
+        // Телега ожидает файл в поле "photo"
+        body.add("photo", new ByteArrayResource(photoBytes) {
+            @Override
+            public String getFilename() {
+                return filename;
+            }
+        });
+
+        baseTelegramClient.post()
+            .uri("/sendPhoto")
+            .contentType(MediaType.MULTIPART_FORM_DATA)
+            .body(BodyInserters.fromMultipartData(body))
+            .retrieve()
+            .onStatus(HttpStatusCode::isError, resp ->
+                resp.bodyToMono(String.class)
+                    .flatMap(err -> Mono.error(new RuntimeException("Telegram sendPhoto error: " + err))))
+            .bodyToMono(String.class)
+            .block();
+    }
+
+    public void sendDocumentWithCaption(Long chatId,
+                                        Integer replyToMessageId,
+                                        String caption,
+                                        byte[] documentBytes,
+                                        String filename) {
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("chat_id", chatId.toString());
+        body.add("reply_to_message_id", replyToMessageId.toString());
+        body.add("caption", caption);
+        body.add("document", new ByteArrayResource(documentBytes) {
+            @Override
+            public String getFilename() {
+                return filename;
+            }
+        });
+
+        baseTelegramClient.post()
+            .uri("/sendDocument")
+            .contentType(MediaType.MULTIPART_FORM_DATA)
+            .body(BodyInserters.fromMultipartData(body))
+            .retrieve()
+            .onStatus(HttpStatusCode::isError, resp ->
+                resp.bodyToMono(String.class)
+                    .flatMap(err -> Mono.error(new RuntimeException("Telegram sendDocument error: " + err))))
+            .bodyToMono(String.class)
+            .block();
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

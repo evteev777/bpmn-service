@@ -3,9 +3,9 @@ info:
   title: BPMN Renderer API
   version: 1.0.0
 paths:
-  /render:
+  /render/bpmn-file:
     post:
-      summary: Render BPMN diagram to image
+      summary: Render BPMN diagram from file .bpmn to image
       parameters:
         - name: format
           in: query
@@ -33,5 +33,34 @@ paths:
             image/svg+xml: { }
         '400':
           description: File not provided
+        '500':
+          description: Rendering error
+  /render/bpmn-xml:
+    post:
+      summary: Render BPMN diagram from raw XML string
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [png, jpeg, svg, pdf]
+            default: png
+          description: Output image format
+      requestBody:
+        required: true
+        content:
+          application/xml:
+            schema:
+              type: string
+      responses:
+        '200':
+          description: Rendered image
+          content:
+            image/png:   {}
+            image/jpeg:  {}
+            image/svg+xml: {}
+            application/pdf: {}
+        '400':
+          description: XML not provided
         '500':
           description: Rendering error

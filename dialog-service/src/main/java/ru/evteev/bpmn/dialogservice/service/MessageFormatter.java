@@ -6,20 +6,17 @@ import ru.evteev.bpmn.dialogservice.model.dto.MinioVoiceFileInfo;
 @Component
 public class MessageFormatter {
 
-    public String formatVoiceFileInfo(MinioVoiceFileInfo info, String voiceAsText) {
+    public String formatVoiceFileInfo(MinioVoiceFileInfo info) {
         return String.format("""
                 Ссылка: %s
                 Длительность: %s
                 Размер: %s
                 Формат: %s
-                
-                Сообщение: %s
                 """,
             info.link(),
             formatDuration(info.duration()),
             formatFileSize(info.fileSize()),
-            info.mimeType(),
-            voiceAsText
+            info.mimeType()
         );
     }
 

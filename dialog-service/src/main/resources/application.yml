@@ -2,9 +2,16 @@ spring:
   application:
     name: dialog-service
 
+render:
+  format: pdf # jpeg, png, svg, pdf
+
 client:
   voice-to-text:
-    url: http://bpmn.evteev.ru:25002/voice-to-text/ogg/file-url
+    url: http://bpmn.evteev.ru:25002
+  bpmn-generator:
+    url: http://81.94.156.30:8000
+  bpmn-render-service:
+    url: http://bpmn.evteev.ru:25004
 
 telegram:
   username: bpmn_process_bot

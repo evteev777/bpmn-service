@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import ru.evteev.bpmn.dialogservice.model.dto.ProcessMultipartVoiceFileResponse;
 import ru.evteev.bpmn.dialogservice.model.dto.VoiceToTextResponse;
 import ru.evteev.bpmn.dialogservice.service.VoiceFileService;
 
@@ -38,13 +39,13 @@ public class VoiceDialogController {
         }
     )
     @PostMapping(value = "/dialog/bpnm/ogg", consumes = "multipart/form-data")
-    public VoiceToTextResponse questionOgg(
+    public ProcessMultipartVoiceFileResponse questionOgg(
         @Parameter(description = "Голосовой файл (.ogg/.oga)", required = true,
             content = @Content(mediaType = "multipart/form-data"))
         @RequestParam("file") MultipartFile file
     ) {
-        VoiceToTextResponse voiceAsText = voiceFileService.processMultipartVoiceFile(file);
-        log.debug("Сообщение: {}", voiceAsText);
-        return voiceAsText;
+        ProcessMultipartVoiceFileResponse response = voiceFileService.processMultipartVoiceFile(file);
+        log.debug("Результат: {}", response);
+        return response;
     }
 }
